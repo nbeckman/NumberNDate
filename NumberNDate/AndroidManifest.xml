@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.nbeckman.numberndate"
+    android:versionCode="1"
+    android:versionName="1.0" >
+
+    <uses-sdk
+        android:minSdkVersion="17"
+        android:targetSdkVersion="17" />
+    <uses-permission android:name="android.permission.GET_ACCOUNTS"/>
+    <uses-permission android:name="android.permission.INTERNET"/>
+
+    <application
+        android:allowBackup="true"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme" >
+        <activity
+            android:name="com.nbeckman.numberndate.MainNumbersActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <!-- I copied this activity from the default above, and I do not
+             know what most of these fields do. -->
+        <activity
+            android:name="com.nbeckman.numberndate.ChooseFileActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize" >
+        </activity>
+        <!-- This 'activity' isn't very interesting, it just allows it to handle
+             intents for authorizing users. -->
+        <activity
+            android:name="com.nbeckman.numberndate.AccountManager"
+            android:configChanges="orientation|keyboardHidden|screenSize" >
+        </activity>
+        <!-- Displays application settings, most importantly account and file. -->
+        <activity
+            android:name="com.nbeckman.numberndate.NumberNDateSettingsActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize">
+        </activity>
+    </application>
+
+</manifest>

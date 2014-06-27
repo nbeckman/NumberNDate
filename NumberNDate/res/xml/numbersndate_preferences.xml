@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+    <PreferenceCategory
+        android:title="@string/preferences_accounts_category">
+        <!-- Launch the account selection intent. -->
+        <Preference android:title="@string/change_spreadsheet_account"
+           		 	android:key="ACCOUNT_PREFERENCES_NAME">
+            <intent android:targetClass="com.nbeckman.numberndate.AccountManager"
+                	android:targetPackage="com.nbeckman.numberndate" />
+        </Preference>
+
+		<!-- Launch the spreadsheet choosing intent. -->
+        <Preference android:title="@string/change_spreadsheet"
+             	    android:key="NUMBERS_SPREADSHEET_PREFERENCES_NAME" >
+            <intent android:targetClass="com.nbeckman.numberndate.ChooseFileActivity"
+                	android:targetPackage="com.nbeckman.numberndate" />
+        </Preference>
+    </PreferenceCategory>
+    
+
+</PreferenceScreen>
