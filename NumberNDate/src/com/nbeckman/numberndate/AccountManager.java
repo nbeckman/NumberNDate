@@ -77,7 +77,7 @@ public class AccountManager extends Activity {
 	// This method basically works just like newReturnAuthorizedUserIntent()
 	// except that it forces an account selection, even if we have previously
 	// got an account working. The most obvious example of when this is useful
-	// is when the user wants to change their account from the preferences menue.
+	// is when the user wants to change their account from the preferences menu.
 	public static Intent newForceAccountPickerIntent(Context context) {
 		Intent intent = new Intent(context, AccountManager.class);
 		intent.putExtra(kForceAccountPickerName, true);

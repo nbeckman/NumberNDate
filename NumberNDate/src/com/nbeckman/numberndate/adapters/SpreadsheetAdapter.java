@@ -18,7 +18,7 @@ public interface SpreadsheetAdapter {
 	// BLOCKING:
 	// This call is expected to contact the spreadsheet service and
 	// possibly read from/write to the local database.
-	public boolean PostOneExpense();
+	public boolean PostOneEntry();
 	
 	// Return the number of expenses waiting to be posted.
 	//

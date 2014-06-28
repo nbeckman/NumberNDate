@@ -20,7 +20,7 @@ public class OutstandingExpensesPoster {
 	private static final TimeUnit kTimeUnit = TimeUnit.MILLISECONDS;
 	
 	private final TextView num_expenses_text_view_;
-	private final SpreadsheetAdapter budget_adapater_;
+	private final SpreadsheetAdapter spreadsheet_adapter_;
 	private final ScheduledThreadPoolExecutor executor_ = 
 			new ScheduledThreadPoolExecutor(1);
 	
@@ -28,9 +28,9 @@ public class OutstandingExpensesPoster {
 	private ScheduledFuture<?> future_ = null;
 	
 	public OutstandingExpensesPoster(TextView num_expenses_text_view,
-			SpreadsheetAdapter budget_adapter) {
+			SpreadsheetAdapter spreadsheet_adapter) {
 		this.num_expenses_text_view_ = num_expenses_text_view;
-		this.budget_adapater_ = budget_adapter;
+		this.spreadsheet_adapter_ = spreadsheet_adapter;
 	}
 	
 	public void start() {
@@ -61,8 +61,7 @@ public class OutstandingExpensesPoster {
 	}
 
 	private void updateUI() {
-		final long num_expenses = 
-				budget_adapater_.NumOutstandingEntries();
+		final long num_expenses = spreadsheet_adapter_.NumOutstandingEntries();
 		num_expenses_text_view_.post(new Runnable(){
 			@Override
 			public void run() {
@@ -72,7 +71,7 @@ public class OutstandingExpensesPoster {
 	}
 	
 	private void update() {
-		if (budget_adapater_.PostOneExpense()) {
+		if (spreadsheet_adapter_.PostOneEntry()) {
 			updateUI();
 		}
 	}

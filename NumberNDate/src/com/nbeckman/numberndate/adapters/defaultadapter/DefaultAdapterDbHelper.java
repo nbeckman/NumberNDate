@@ -17,14 +17,14 @@ public final class DefaultAdapterDbHelper extends SQLiteOpenHelper {
 
 	@Override
 	public void onCreate(SQLiteDatabase db) {
-		db.execSQL(DefaultPendingExpensesContract.SQL_CREATE_TABLE);
+		db.execSQL(DefaultPendingNumbersContract.SQL_CREATE_TABLE);
 	}
 
 	@Override
 	public void onUpgrade(SQLiteDatabase db, int arg1, int arg2) {
 		// Delete these pending numbers. Ouch.
 		// TODO(nbeckman): Preserve through the upgrade?
-		db.execSQL(DefaultPendingExpensesContract.SQL_DELETE_TABLE);
+		db.execSQL(DefaultPendingNumbersContract.SQL_DELETE_TABLE);
         onCreate(db);
 	}
 	@Override

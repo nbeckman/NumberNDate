@@ -21,12 +21,9 @@ import android.widget.TextView;
 
 import com.google.android.gms.auth.GoogleAuthException;
 import com.google.gdata.client.spreadsheet.SpreadsheetService;
-import com.google.gdata.data.spreadsheet.CellEntry;
 import com.google.gdata.data.spreadsheet.WorksheetEntry;
 import com.google.gdata.data.spreadsheet.WorksheetFeed;
 import com.google.gdata.util.ServiceException;
-import com.nbeckman.numberndate.adapters.BudgetCategory;
-import com.nbeckman.numberndate.adapters.BudgetMonth;
 import com.nbeckman.numberndate.adapters.SpreadsheetAdapter;
 import com.nbeckman.numberndate.adapters.defaultadapter.DefaultSpreadsheetAdapter;
 
@@ -34,28 +31,25 @@ import com.nbeckman.numberndate.adapters.defaultadapter.DefaultSpreadsheetAdapte
 // and send people off to select a user and spreadsheet if need be.
 public class MainNumbersActivity extends Activity {
 	
+	// Intent ID; this tells us when the account picker is returning. 
+	private static final int kAccountChoiceIntent = 1;
+	// Intent ID; this tells us when the ChooseFileActivity is returning.
+	private static final int kSpreadsheetChoiceIntent = 2;
+
 	// I'm anticipating having several callbacks for checking/posting
 	// the latest spreadsheet information. Here is the first one:
 	private OutstandingExpensesPoster expenses_poster_ = null;
 	
-	private SpreadsheetAdapter budget_adapter_ = null;
+	private SpreadsheetAdapter spreadsheet_adapter_ = null;
 	private SpreadsheetService spreadsheet_service_ = null;
 	private WorksheetFeed worksheet_feed_ = null;
-	
-	private CellEntry month_total_cell_ = null;
-	
-	// Currently selected cells.
-	private BudgetMonth selected_month_cell_ = null;
-	private BudgetCategory selected_category_cell_ = null;
 	
 	// The listener for the 'add expense' button.
 	// TODO(nbeckman): Probably make this its own class.
 	private OnClickListener add_expense_button_listener_ = new OnClickListener() {
 		@Override
 		public void onClick(View arg0) {
-			// If there's no selected category/month, we do nothing.
-			if (selected_category_cell_ == null || selected_month_cell_ == null ||
-					budget_adapter_ == null) {
+			if (spreadsheet_adapter_ == null) {
 				return;
 			}
 			final TextView expense_textbox = 
@@ -74,7 +68,7 @@ public class MainNumbersActivity extends Activity {
 			(new AsyncTask<String, String, String>(){
 				@Override
 				protected String doInBackground(String... params) {
-					budget_adapter_.AddValue(final_expense_amount);
+					spreadsheet_adapter_.AddValue(final_expense_amount);
 					return "";
 				}
 				@Override
@@ -98,7 +92,82 @@ public class MainNumbersActivity extends Activity {
 
         final Button add_expense_button = (Button)findViewById(R.id.add_expense_button);
         add_expense_button.setOnClickListener(add_expense_button_listener_);
-        
+      
+        if (establishAccountAndSpreadsheet()) {
+        	startDisplayLogic();
+        }
+    }
+    
+    private boolean establishAccountAndSpreadsheet() {
+    	if(AccountManager.hasStoredAccount(this)) {
+    		if (ChooseFileActivity.hasStoredSpreadsheet(this)) {
+    			// Now we can actually do something.
+    			return true;
+    		} else {
+    			// We need to call the ChooseFileActivity from an intent.
+    			Intent choose_spreadsheet_intent = new Intent(this, ChooseFileActivity.class);
+        		startActivityForResult(choose_spreadsheet_intent, kSpreadsheetChoiceIntent);
+    		}
+    	} else {
+    		// We need to force the account picker intent.
+    		Intent choose_account_intent = AccountManager.newReturnAuthorizedUserIntent(this);
+    		startActivityForResult(choose_account_intent, kAccountChoiceIntent);
+    	}
+    	return false;
+    }
+    
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		if (requestCode == kAccountChoiceIntent && resultCode == RESULT_OK) {
+			// Do it again, this time to get the spreadsheet.
+			if (establishAccountAndSpreadsheet()) {
+				startDisplayLogic();
+			}
+			// In the else case, we are waiting for the next spreadsheet choice result.
+		} else if (requestCode == kSpreadsheetChoiceIntent && resultCode == RESULT_OK) {
+			// We are ready to begin.
+			startDisplayLogic();
+		} else {
+			Log.w("MainNumbersActivity", "Weird unhandled activity result. requestCode: " + requestCode
+					+ " resultCode: " + resultCode);
+		}
+		// TODO(nbeckman): I know there is a bug where people are directed towards the spreadsheet
+		// chooser but never choose one and hit back instead. In such a case the startDisplayLogic is
+		// never called, the spreadsheet member neber set, and the button to post a number does nothing.
+	}
+    
+    @Override
+	protected void onDestroy() {
+		super.onDestroy();
+		// Kill all of the rando background threads we may 
+		// have running.
+		if (this.expenses_poster_ != null) {
+			this.expenses_poster_.stop();
+		}
+	}
+
+	@Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+    	// Just the code to make my list of menu items come up.
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.megabudget_menu, menu);
+        return true;
+    }
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		// Someone clicked on _something_ in the menu, and since
+		// we have only one item, we assume it was the settings
+		// menu. Launch it... 
+		Intent intent = new Intent();
+	    intent.setClass(this, NumberNDateSettingsActivity.class);
+	    startActivity(intent);
+		return true;
+	}
+	
+	// Needs a better name; attempts to load a user and spreadsheet once these properties have
+	// both already been selected by the user and stored in preferences.
+	private void startDisplayLogic() {
         // Show a process dialog since loading the categories and
         // stuff can be slow.
         // TODO(nbeckman): This thing is like completely modal, so do something
@@ -118,8 +187,6 @@ public class MainNumbersActivity extends Activity {
         		
         		Log.i("MainNumbersActivity", "Accound manager has stored account: " + account);
         		
-        		// TODO XXX We have no account selected. Force an account picker if account.empty().
-        		
     			// Can't be called in UI thread.
     			try {
     				spreadsheet_service_ = 
@@ -130,17 +197,17 @@ public class MainNumbersActivity extends Activity {
         					new URL(spreadsheet_url), WorksheetFeed.class);
             		List<WorksheetEntry> worksheets = worksheet_feed_.getEntries();
             		WorksheetEntry worksheet = worksheets.get(0);
-            		budget_adapter_ = new DefaultSpreadsheetAdapter(getBaseContext(), worksheet, spreadsheet_service_);
+            		spreadsheet_adapter_ = new DefaultSpreadsheetAdapter(getBaseContext(), worksheet, spreadsheet_service_);
             		
             		// Start callback thread that will periodically try to post outstanding expenses.
             		final TextView outstanding_expenses = (TextView)findViewById(R.id.expensesToPostValue);
             		expenses_poster_ = new OutstandingExpensesPoster(
             			outstanding_expenses, 
-            			budget_adapter_);
+            			spreadsheet_adapter_);
             		expenses_poster_.start();
             		
             		final long num_outstanding_expenses =
-            			budget_adapter_.NumOutstandingEntries();
+            			spreadsheet_adapter_.NumOutstandingEntries();
         			return new InterfaceUpdateData(num_outstanding_expenses);
 				} catch (GoogleAuthException e) {
 					// TODO Auto-generated catch block
@@ -173,56 +240,6 @@ public class MainNumbersActivity extends Activity {
         			outstanding_expenses_text_view.setText(
         				update.getNumOutstandingExpenses().toString());
         		}
-        		
-        		// Write total to total text box.
-        		updateMonthTotalTextFromCell();
         	}}).execute();
-    }
-    
-    @Override
-	protected void onDestroy() {
-		super.onDestroy();
-		// Kill all of the rando background threads we may 
-		// have running.
-		if (this.expenses_poster_ != null) {
-			this.expenses_poster_.stop();
-		}
 	}
-
-	@Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-    	// Just the code to make my list of menu items come up.
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.megabudget_menu, menu);
-        return true;
-    }
-
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		// Someone clicked on _something_ in the menu, and since
-		// we have only one item, we assume it was the settings
-		// menu. Launch it... 
-		Intent intent = new Intent();
-	    intent.setClass(this, NumberNDateSettingsActivity.class);
-	    startActivity(intent);
-		return true;
-	}
-
-	// If month_total_cell_ has a value, sets it directly as the total textbox's
-	// value. Accordingly, this must be called from a UI thread.
-	//
-	// I think the cell data is immediately out of date after you update the
-	// sheet? So we need to figure out what to do...
-	private void updateMonthTotalTextFromCell() {
-		// TODO(nbeckman): I need a better way of storing, what is the current month..
-		if (month_total_cell_ != null) {
-			// Initially, the total of the first month is displayed.
-			// If another month is chosen, we can display that total.
-			final String month_total = month_total_cell_.getCell().getValue();
-			final TextView total_textbox = (TextView)findViewById(R.id.monthTotalDisplay);
-			total_textbox.setText(month_total);
-		}
-	}
-	
-	
 }

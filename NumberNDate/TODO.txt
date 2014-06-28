@@ -3,4 +3,7 @@ TODO
 Sometimes I go long stretches of time without working on this app, so I can't remember where I am, progress-wise.
 
 Here's some things that need doing:
-- Everything
+- Make sure the columns have headers with the same name we're going to insert with; that's
+  the only way the row feed works. Or just use the cell feed. Might not be so hard...
+- There's a bug in the very initial start-up when you refuse to select a spreadsheet by going
+  back, then some member variables are not initialized and the button does nothing.

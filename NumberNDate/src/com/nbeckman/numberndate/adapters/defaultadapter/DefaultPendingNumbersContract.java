@@ -10,8 +10,8 @@ import android.provider.BaseColumns;
 //
 // The idea for this comes from the Android dev docs:
 // https://developer.android.com/training/basics/data-storage/databases.html
-public final class DefaultPendingExpensesContract {
-	private DefaultPendingExpensesContract() {}
+public final class DefaultPendingNumbersContract {
+	private DefaultPendingNumbersContract() {}
 	
 	private static final String REAL_TYPE = " REAL";
 	private static final String INTEGER_TYPE = " INTEGER";
@@ -19,18 +19,18 @@ public final class DefaultPendingExpensesContract {
 	
 	// How to create this table.
 	public static final String SQL_CREATE_TABLE =
-	    "CREATE TABLE " + ExpenseEntry.TABLE_NAME + " (" +
-	    ExpenseEntry._ID + " INTEGER PRIMARY KEY," +
-	    ExpenseEntry.COLUMN_NAME_NUMBER + REAL_TYPE + COMMA_SEP +
-	    ExpenseEntry.COLUMN_NAME_DATE_ADDED + INTEGER_TYPE +
+	    "CREATE TABLE " + PendingNumbersEntry.TABLE_NAME + " (" +
+	    PendingNumbersEntry._ID + " INTEGER PRIMARY KEY," +
+	    PendingNumbersEntry.COLUMN_NAME_NUMBER + REAL_TYPE + COMMA_SEP +
+	    PendingNumbersEntry.COLUMN_NAME_DATE_ADDED + INTEGER_TYPE +
 	    ");";
 	
 	// How to delete this table
 	static final String SQL_DELETE_TABLE =
-		"DROP TABLE IF EXISTS " + ExpenseEntry.TABLE_NAME;
+		"DROP TABLE IF EXISTS " + PendingNumbersEntry.TABLE_NAME;
 	
 	// Inner class that defines the table contents.
-    public static abstract class ExpenseEntry implements BaseColumns {
+    public static abstract class PendingNumbersEntry implements BaseColumns {
 		public static final String TABLE_NAME = "outstanding_expenses";
     	
     	// Each constant starting with COLUMN_NAME_ is a new column.

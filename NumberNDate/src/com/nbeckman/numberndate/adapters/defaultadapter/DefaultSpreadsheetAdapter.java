@@ -15,6 +15,7 @@ import android.content.Loader;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
 
 import com.google.gdata.client.spreadsheet.SpreadsheetService;
 import com.google.gdata.data.spreadsheet.ListEntry;
@@ -24,7 +25,7 @@ import com.google.gdata.util.ServiceException;
 import com.nbeckman.numberndate.adapters.BudgetCategory;
 import com.nbeckman.numberndate.adapters.BudgetMonth;
 import com.nbeckman.numberndate.adapters.SpreadsheetAdapter;
-import com.nbeckman.numberndate.adapters.defaultadapter.DefaultPendingExpensesContract.ExpenseEntry;
+import com.nbeckman.numberndate.adapters.defaultadapter.DefaultPendingNumbersContract.PendingNumbersEntry;
 
 // Default spreadsheet adapter. Stores numbers in the Sql database until they
 // are posted to the spreadsheet, which occurs by adding a new row.
@@ -98,28 +99,28 @@ public class DefaultSpreadsheetAdapter implements SpreadsheetAdapter {
 		// Create a new database entry for this number. The DB handler will post it later.
 		SQLiteDatabase db = this.dbHelper.getWritableDatabase();
 		ContentValues values = new ContentValues();
-		values.put(ExpenseEntry.COLUMN_NAME_DATE_ADDED, date_added);
-		values.put(ExpenseEntry.COLUMN_NAME_NUMBER, number);
-		db.insert(ExpenseEntry.TABLE_NAME, null, values);
+		values.put(PendingNumbersEntry.COLUMN_NAME_DATE_ADDED, date_added);
+		values.put(PendingNumbersEntry.COLUMN_NAME_NUMBER, number);
+		db.insert(PendingNumbersEntry.TABLE_NAME, null, values);
 	}
 
 	@Override
 	public long NumOutstandingEntries() {
 		final SQLiteDatabase db = this.dbHelper.getReadableDatabase();
-		return DatabaseUtils.queryNumEntries(db, ExpenseEntry.TABLE_NAME);
+		return DatabaseUtils.queryNumEntries(db, PendingNumbersEntry.TABLE_NAME);
 	}
 	
 	@Override
-	public boolean PostOneExpense() {
+	public boolean PostOneEntry() {
 		// Get the oldest expense by ID if there is one, and then
 		// post it.
 		final SQLiteDatabase db = this.dbHelper.getWritableDatabase();
 		// Projection: Until it matters, just return all the columns.
 		final String[] projection = null;
 		final String sortOrder =
-				ExpenseEntry.COLUMN_NAME_DATE_ADDED + " ASC";
+				PendingNumbersEntry.COLUMN_NAME_DATE_ADDED + " ASC";
 		final Cursor cursor = db.query(
-				ExpenseEntry.TABLE_NAME, 
+				PendingNumbersEntry.TABLE_NAME, 
 			    projection,                              
 			    "",                 
 			    new String[0],                        
@@ -133,28 +134,45 @@ public class DefaultSpreadsheetAdapter implements SpreadsheetAdapter {
 		final double number =
 			cursor.getDouble(
 				cursor.getColumnIndexOrThrow(
-					ExpenseEntry.COLUMN_NAME_NUMBER));
+					PendingNumbersEntry.COLUMN_NAME_NUMBER));
 		final long date_added_millis =
 				cursor.getLong(
 					cursor.getColumnIndexOrThrow(
-						ExpenseEntry.COLUMN_NAME_DATE_ADDED));
+						PendingNumbersEntry.COLUMN_NAME_DATE_ADDED));
 		try {
 			// Fetch the list feed of the worksheet.
 		    URL listFeedUrl = worksheetFeed.getListFeedUrl();
 		    ListFeed listFeed = spreadsheetService.getFeed(listFeedUrl, ListFeed.class);
 		    
-		    
 		    // Convert date in millis to DD/MM/YY
 		    DateFormat date_format = SimpleDateFormat.getDateInstance();
 	        Date date_added = new Date(date_added_millis);
 		    
-		    // Create a local representation of the new row.
+		    // Create a local representation of the new row. This is truly horrible;
+	        // you cannot add a new row the the spreadsheet except by naming the column
+	        // header that it should go in.
+	        // TODO(nbeckman): Make sure the columns have these names.
 		    ListEntry row = new ListEntry();
 		    row.getCustomElements().setValueLocal("date", date_format.format(date_added));
 		    row.getCustomElements().setValueLocal("number", Double.toString(number));
 
+		    Log.i("DefaultSpreadsheetAdapter", "Attempting to post number " + number +
+		    		" and date " + date_format.format(date_added) + " to url " + listFeedUrl);
+		    
 		    // Send the new row to the API for insertion.
 		    row = listFeed.insert(row);
+			// Now delete that row so we don't process it again.
+			// Technically we've got no atomicity here... Hopefully
+			// the network operation is much more likely to fail than
+			// this.
+		    final long row_id = cursor.getLong(
+		    		cursor.getColumnIndexOrThrow(PendingNumbersEntry._ID));
+			// Define 'where' part of query.
+			String selection = PendingNumbersEntry._ID + " LIKE ?";
+			// Specify arguments in placeholder order.
+			String[] selectionArgs = { String.valueOf(row_id) };
+			// Issue SQL statement.
+			db.delete(PendingNumbersEntry.TABLE_NAME, selection, selectionArgs);
 		    return true;
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
