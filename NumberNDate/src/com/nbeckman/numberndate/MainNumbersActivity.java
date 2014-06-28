@@ -133,7 +133,7 @@ public class MainNumbersActivity extends Activity {
 		}
 		// TODO(nbeckman): I know there is a bug where people are directed towards the spreadsheet
 		// chooser but never choose one and hit back instead. In such a case the startDisplayLogic is
-		// never called, the spreadsheet member neber set, and the button to post a number does nothing.
+		// never called, the spreadsheet member never set, and the button to post a number does nothing.
 	}
     
     @Override

@@ -20,13 +20,6 @@
             <requestFocus />
         </EditText>
 
-        <Spinner
-            android:id="@+id/spinner3"
-            android:entries="@array/currency_array"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1" />
-
     </LinearLayout>
 
     <Button
