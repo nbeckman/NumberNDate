@@ -7,6 +7,7 @@ import java.util.List;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -16,7 +17,9 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import com.google.android.gms.auth.GoogleAuthException;
@@ -241,5 +244,13 @@ public class MainNumbersActivity extends Activity {
         				update.getNumOutstandingExpenses().toString());
         		}
         	}}).execute();
+		// Since there's only one thing you want to do, type in a number,
+		// start with the keyboard out and focused on the number box.
+        // TODO(nbeckman): This does nothing and I can't get it to work.
+		EditText editText = (EditText)findViewById(R.id.expense_amount_textbox);
+		editText.requestFocus();
+		editText.requestFocusFromTouch();
+		InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+		imm.showSoftInput(editText, InputMethodManager.SHOW_IMPLICIT);
 	}
 }
