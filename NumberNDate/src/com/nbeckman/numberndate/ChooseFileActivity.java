@@ -39,7 +39,7 @@ public class ChooseFileActivity extends Activity
 	
 	// The preference name for the stored spreadsheet, picked initially and used forevermore
 	// after that.
-	public static final String kNumbersShreadsheetPreferencesName = "NUMBERS_SPREADSHEET_PREFERENCES_NAME";
+	public static final String kNumbersSpreadsheetPreferencesName = "NUMBERS_SPREADSHEET_PREFERENCES_NAME";
 	
 	// The preference name for the spreadsheet URL. Basically  pair with the above preference, except
 	// that one is for display, and this one is for actually changing/reading the spreadsheet.
@@ -49,7 +49,7 @@ public class ChooseFileActivity extends Activity
 	public static boolean hasStoredSpreadsheet(Context context) {
 		final SharedPreferences shared_pref = 
 				PreferenceManager.getDefaultSharedPreferences(context);
-		return shared_pref.contains(kNumbersShreadsheetPreferencesName);	
+		return shared_pref.contains(kNumbersSpreadsheetPreferencesName);	
 	}
 	
 	// Gets the current spreadsheet in use as is stored in the shared preferences 
@@ -58,7 +58,7 @@ public class ChooseFileActivity extends Activity
 	public static String getStoredSpreadsheet(Context context) {
 		final SharedPreferences shared_pref = 
 				PreferenceManager.getDefaultSharedPreferences(context);
-		return shared_pref.getString(kNumbersShreadsheetPreferencesName, "");		
+		return shared_pref.getString(kNumbersSpreadsheetPreferencesName, "");		
 	}
 
 	// Gets the current spreadsheet URL in use as is stored in the shared preferences 
@@ -75,7 +75,7 @@ public class ChooseFileActivity extends Activity
 		final SharedPreferences shared_pref = 
 				PreferenceManager.getDefaultSharedPreferences(context);
 		Editor editor = shared_pref.edit();
-		editor.putString(kNumbersShreadsheetPreferencesName, spreadsheet_name);
+		editor.putString(kNumbersSpreadsheetPreferencesName, spreadsheet_name);
 		editor.commit();
 	}
 	

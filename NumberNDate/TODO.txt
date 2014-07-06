@@ -3,7 +3,16 @@ TODO
 Sometimes I go long stretches of time without working on this app, so I can't remember where I am, progress-wise.
 
 Here's some things that need doing:
+
+I think these are the two things I need to do before considering the first version to be
+complete.
 - Make sure the columns have headers with the same name we're going to insert with; that's
   the only way the row feed works. Or just use the cell feed. Might not be so hard...
+  a.) check for heads and use them, b.) if empty write number/date
 - There's a bug in the very initial start-up when you refuse to select a spreadsheet by going
-  back, then some member variables are not initialized and the button does nothing.
+  back, then some member variables are not initialized and the button does nothing. Just grey
+  out the controls until a spreadsheet has been accepted.
+  
+More:
+- Test out no network connection, make sure it still stores things. 
+- Have some text in the ChooseFileActivity before the files are loaded otherwise it looks really weird.

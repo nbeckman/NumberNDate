@@ -9,8 +9,11 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -32,7 +35,7 @@ import com.nbeckman.numberndate.adapters.defaultadapter.DefaultSpreadsheetAdapte
 
 // Main activity for the Number N' Date app. Must set up the display
 // and send people off to select a user and spreadsheet if need be.
-public class MainNumbersActivity extends Activity {
+public class MainNumbersActivity extends Activity implements OnSharedPreferenceChangeListener {
 	
 	// Intent ID; this tells us when the account picker is returning. 
 	private static final int kAccountChoiceIntent = 1;
@@ -48,7 +51,6 @@ public class MainNumbersActivity extends Activity {
 	private WorksheetFeed worksheet_feed_ = null;
 	
 	// The listener for the 'add expense' button.
-	// TODO(nbeckman): Probably make this its own class.
 	private OnClickListener add_expense_button_listener_ = new OnClickListener() {
 		@Override
 		public void onClick(View arg0) {
@@ -65,7 +67,7 @@ public class MainNumbersActivity extends Activity {
 				return;
 			}
 			// Text box cannot be edited while we are changing the value.
-			expense_textbox.setEnabled(false);
+			disableControls();
 			
 			final double final_expense_amount = expense_amount;
 			(new AsyncTask<String, String, String>(){
@@ -80,7 +82,7 @@ public class MainNumbersActivity extends Activity {
 						expenses_poster_.forceUpdateUI();
 					}
 					// Reenable text box again.
-					expense_textbox.setEnabled(true);
+					enableControls();
 					expense_textbox.setText("");
 					expense_textbox.setHint(R.string.expense_amount_hint);
 				}
@@ -93,12 +95,41 @@ public class MainNumbersActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_budget);
 
+        // Everything is greyed out until we know we have a
+        // spreadsheet chosen (and thus, hopefully, also an account).
+        this.disableControls();
+        
         final Button add_expense_button = (Button)findViewById(R.id.add_expense_button);
         add_expense_button.setOnClickListener(add_expense_button_listener_);
-      
+        
         if (establishAccountAndSpreadsheet()) {
         	startDisplayLogic();
         }
+        
+        // Add this activity as a preferences listener, so that when the spreadsheet
+        // is changed we can be sure to re-run startDisplayLogic().
+    	final SharedPreferences shared_pref = 
+				PreferenceManager.getDefaultSharedPreferences(this);
+    	shared_pref.registerOnSharedPreferenceChangeListener(this);
+    }
+    
+    // Helper method to disable everything (important) in the view. This allows us to,
+    // e.g., disable the controls until the user has chosen a spreadsheet.
+    private void disableControls() {
+    	final Button add_expense_button = (Button)findViewById(R.id.add_expense_button);
+    	add_expense_button.setEnabled(false);
+    	final TextView expense_acount_textbox = 
+    			(TextView)findViewById(R.id.expense_amount_textbox);
+    	expense_acount_textbox.setEnabled(false);
+    }
+    
+    // Enables all the views disabled by disableControls.
+    private void enableControls() {
+    	final Button add_expense_button = (Button)findViewById(R.id.add_expense_button);
+    	add_expense_button.setEnabled(true);
+    	final TextView expense_acount_textbox = 
+    			(TextView)findViewById(R.id.expense_amount_textbox);
+    	expense_acount_textbox.setEnabled(true);
     }
     
     private boolean establishAccountAndSpreadsheet() {
@@ -129,14 +160,13 @@ public class MainNumbersActivity extends Activity {
 			// In the else case, we are waiting for the next spreadsheet choice result.
 		} else if (requestCode == kSpreadsheetChoiceIntent && resultCode == RESULT_OK) {
 			// We are ready to begin.
+			// TODO(nbeckman): This call could actually be redundant as the preferences
+			// listener should automatically call startDisplayLogic().
 			startDisplayLogic();
 		} else {
 			Log.w("MainNumbersActivity", "Weird unhandled activity result. requestCode: " + requestCode
 					+ " resultCode: " + resultCode);
 		}
-		// TODO(nbeckman): I know there is a bug where people are directed towards the spreadsheet
-		// chooser but never choose one and hit back instead. In such a case the startDisplayLogic is
-		// never called, the spreadsheet member never set, and the button to post a number does nothing.
 	}
     
     @Override
@@ -170,7 +200,12 @@ public class MainNumbersActivity extends Activity {
 	
 	// Needs a better name; attempts to load a user and spreadsheet once these properties have
 	// both already been selected by the user and stored in preferences.
+	// TODO(nbeckman): Call this whenever the spreadsheet changes.
 	private void startDisplayLogic() {
+		// By this point we should definitely have an account, so we can enable the controls
+		// that allow the user to enter stuff.
+		this.enableControls();
+		
         // Show a process dialog since loading the categories and
         // stuff can be slow.
         // TODO(nbeckman): This thing is like completely modal, so do something
@@ -187,8 +222,7 @@ public class MainNumbersActivity extends Activity {
         	@Override
         	protected InterfaceUpdateData doInBackground(String... arg0) {
         		final String account = AccountManager.getStoredAccount(MainNumbersActivity.this);
-        		
-        		Log.i("MainNumbersActivity", "Accound manager has stored account: " + account);
+        		Log.i("MainNumbersActivity", "Account manager has stored account: " + account);
         		
     			// Can't be called in UI thread.
     			try {
@@ -202,7 +236,11 @@ public class MainNumbersActivity extends Activity {
             		WorksheetEntry worksheet = worksheets.get(0);
             		spreadsheet_adapter_ = new DefaultSpreadsheetAdapter(getBaseContext(), worksheet, spreadsheet_service_);
             		
-            		// Start callback thread that will periodically try to post outstanding expenses.
+            		// Start callback thread that will periodically try to post outstanding expenses. If there had been
+            		// one running before, stop the old one so it will no longer post to the old spreadsheet.
+            		if (expenses_poster_ != null) {
+            			expenses_poster_.stop();
+            		}
             		final TextView outstanding_expenses = (TextView)findViewById(R.id.expensesToPostValue);
             		expenses_poster_ = new OutstandingExpensesPoster(
             			outstanding_expenses, 
@@ -252,5 +290,19 @@ public class MainNumbersActivity extends Activity {
 		editText.requestFocusFromTouch();
 		InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
 		imm.showSoftInput(editText, InputMethodManager.SHOW_IMPLICIT);
+	}
+
+	@Override
+	public void onSharedPreferenceChanged(SharedPreferences shared_prefs, String key) {
+		if (key.equals(ChooseFileActivity.kNumbersSpreadsheetPreferencesName)) {
+			// See if  we've changed the settings TO a spreadsheet, or if we have somehow
+			// cleared it.
+			if (ChooseFileActivity.getStoredSpreadsheet(this) == null ||
+					ChooseFileActivity.getStoredSpreadsheet(this).length() == 0) {
+				this.disableControls();
+			} else {
+				this.startDisplayLogic();
+			}
+		}
 	}
 }

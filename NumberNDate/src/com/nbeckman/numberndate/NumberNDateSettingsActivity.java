@@ -12,27 +12,20 @@ import android.preference.PreferenceManager;
 
 // A wrapper for the settings fragment that actually contains the settings.
 // Not sure why fragments are good actually...
-public class NumberNDateSettingsActivity extends Activity {
-
-	// The name of the spreadsheet, picked initially and used forevermore.
-	// TODO(nbeckman): Allow this to be changed.
-	// TODO(nbeckman): Wouldn't we rather store a doc ID or something? Something we are
-	//                 not afraid of collisions?
-	public static final String kNumbersSpreadsheetPreferencesName = "NUMBERS_SPREADSHEET_PREFERENCES_NAME";
-	
+public class NumberNDateSettingsActivity extends Activity {	
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         // Display the fragment as the main content.
         getFragmentManager().beginTransaction()
-                .replace(android.R.id.content, new MegaBudgetSettingsFragment())
+                .replace(android.R.id.content, new NumberNDateSettingsFragment())
                 .commit();
     }
 	
 	// This 'fragment' is a tiny view that can be displayed by a full
 	// activity. This one lets the user choose preferences.
-	public static class MegaBudgetSettingsFragment extends PreferenceFragment 
+	public static class NumberNDateSettingsFragment extends PreferenceFragment 
 												   implements OnSharedPreferenceChangeListener {
 		@Override
 		public void onCreate(Bundle savedInstanceState) {
@@ -50,9 +43,9 @@ public class NumberNDateSettingsActivity extends Activity {
 			final SharedPreferences shared_pref = 
 					PreferenceManager.getDefaultSharedPreferences(getActivity());
 	        final String spreadsheet = 
-	        		shared_pref.getString(kNumbersSpreadsheetPreferencesName, "");
+	        		shared_pref.getString(ChooseFileActivity.kNumbersSpreadsheetPreferencesName, "");
 			final Preference accountPref = 
-					findPreference(kNumbersSpreadsheetPreferencesName);
+					findPreference(ChooseFileActivity.kNumbersSpreadsheetPreferencesName);
 	        accountPref.setSummary(spreadsheet);
 	        
 	        // This used to be in onResume(), but I found it was unregistering when I went to
