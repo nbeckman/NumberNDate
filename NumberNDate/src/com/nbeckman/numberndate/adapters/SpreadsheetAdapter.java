@@ -29,6 +29,10 @@ public interface SpreadsheetAdapter {
 	// Adds/removes a new observer. This class will call
 	// onContentChanged on its observers when the months
 	// database entries are changed.
+	//
+	// We don't have months any more, so I'm just keeping these
+	// observer methods around in case I want to observe something
+	// else.
 	// 
 	// TODO(nbeckman): Isn't there a better class than Loader?
 	public void AddMonthsObserver(Loader<?> observer);

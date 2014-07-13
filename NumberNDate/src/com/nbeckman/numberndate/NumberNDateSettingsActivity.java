@@ -43,9 +43,9 @@ public class NumberNDateSettingsActivity extends Activity {
 			final SharedPreferences shared_pref = 
 					PreferenceManager.getDefaultSharedPreferences(getActivity());
 	        final String spreadsheet = 
-	        		shared_pref.getString(ChooseFileActivity.kNumbersSpreadsheetPreferencesName, "");
+	        		shared_pref.getString(SpreadsheetFileManager.kNumbersSpreadsheetPreferencesName, "");
 			final Preference accountPref = 
-					findPreference(ChooseFileActivity.kNumbersSpreadsheetPreferencesName);
+					findPreference(SpreadsheetFileManager.kNumbersSpreadsheetPreferencesName);
 	        accountPref.setSummary(spreadsheet);
 	        
 	        // This used to be in onResume(), but I found it was unregistering when I went to

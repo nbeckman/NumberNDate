@@ -3,20 +3,19 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:orientation="vertical" >
-
     
 	<ListView
 		android:id="@+id/file_chooser_list_view"
 		android:layout_width="wrap_content"
-		android:layout_height="fill_parent"/>
-    
-    <TextView
+		android:layout_height="fill_parent"/>    
+
+	<TextView
         android:id="@+id/textView1"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
         android:text="@string/choose_your_budget_file"
         android:textAppearance="?android:attr/textAppearanceLarge" />
-
+	
 <!-- 
 	<Button
 	    android:id="@+id/choose_file_button"

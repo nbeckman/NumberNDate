@@ -22,58 +22,12 @@ import com.google.gdata.data.spreadsheet.ListEntry;
 import com.google.gdata.data.spreadsheet.ListFeed;
 import com.google.gdata.data.spreadsheet.WorksheetEntry;
 import com.google.gdata.util.ServiceException;
-import com.nbeckman.numberndate.adapters.BudgetCategory;
-import com.nbeckman.numberndate.adapters.BudgetMonth;
 import com.nbeckman.numberndate.adapters.SpreadsheetAdapter;
 import com.nbeckman.numberndate.adapters.defaultadapter.DefaultPendingNumbersContract.PendingNumbersEntry;
 
 // Default spreadsheet adapter. Stores numbers in the Sql database until they
 // are posted to the spreadsheet, which occurs by adding a new row.
 public class DefaultSpreadsheetAdapter implements SpreadsheetAdapter {
-	class DefaultBudgetMonth implements BudgetMonth {
-		final String name;
-		final String cell_feed_url;
-		final int column;
-		
-		public DefaultBudgetMonth(String name, String cell_feed_url, int column) {
-			this.name = name;
-			this.cell_feed_url = cell_feed_url;
-			this.column = column;
-		}
-
-		@Override
-		public String getName() {
-			return name;
-		}
-		
-		@Override 
-		public String toString() {
-			return getName();
-		}
-	}
-	
-	class DefaultBudgetCategory implements BudgetCategory {
-		final String name;
-		final String cell_feed_url;
-		final int row;
-		
-		public DefaultBudgetCategory(String name, String cell_feed_url, int row) {
-			this.name = name;
-			this.cell_feed_url = cell_feed_url;
-			this.row = row;
-		}
-
-		@Override
-		public String getName() {
-			return name;
-		}
-		
-		@Override 
-		public String toString() {
-			return getName();
-		}
-	}
-	
 	private final DefaultAdapterDbHelper dbHelper;
 	private final WorksheetEntry worksheetFeed;
 	private final SpreadsheetService spreadsheetService;

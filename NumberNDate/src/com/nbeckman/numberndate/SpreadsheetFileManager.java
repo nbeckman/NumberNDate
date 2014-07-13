@@ -31,8 +31,7 @@ import com.nbeckman.numberndate.R;
 // This class shows users a list of available files, and then
 // forces them to choose the default file that will be edited
 // from that point forward.
-// TODO(nbeckman): Change name to FileManager?
-public class ChooseFileActivity extends Activity
+public class SpreadsheetFileManager extends Activity
 		implements LoaderManager.LoaderCallbacks<List<SpreadsheetEntry>> {
 	
 	private final static int kSpreadsheetFileLoaderId = 1;
@@ -98,9 +97,12 @@ public class ChooseFileActivity extends Activity
 		// Set empty adapter for list view to start with.
 		ListView list_view = 
 				(ListView)this.findViewById(R.id.file_chooser_list_view);
-		list_view.setAdapter(
-				new SpreadsheetFilesAdapter(this, new ArrayList<SpreadsheetEntry>()));
+		list_view.setAdapter(new LoadingFilesAdapter(this));
 		list_view.setOnItemClickListener(mListClickedHandler);
+		
+		TextView list_header = new TextView(this);
+		list_header.setText(getString(R.string.choose_your_budget_file));
+		list_view.addHeaderView(list_header);
 		
 		// Set up the loader. The loader is responsible for asynchronously finding out
 		// the names of all the spreadsheets and then populating the list with the
@@ -119,9 +121,9 @@ public class ChooseFileActivity extends Activity
 		    	// Return the file name to the calling activity.
 		    	// Store filename & worksheet feed URL
 	    		storeSpreadsheet(
-	    				ChooseFileActivity.this, spreadsheet.getTitle().getPlainText());
+	    				SpreadsheetFileManager.this, spreadsheet.getTitle().getPlainText());
 	    		storeSpreadsheetURL(
-	    				ChooseFileActivity.this, spreadsheet.getWorksheetFeedUrl().toString());
+	    				SpreadsheetFileManager.this, spreadsheet.getWorksheetFeedUrl().toString());
 	    		System.err.println(spreadsheet.getWorksheetFeedUrl().toString());
 		    	returnIntent.putExtra("result", spreadsheet.getWorksheetFeedUrl().toString());
 		    	setResult(RESULT_OK, returnIntent);   
@@ -196,6 +198,51 @@ class SpreadsheetFilesLoader extends AsyncTaskLoader<List<SpreadsheetEntry>> {
 		// and
 		// http://stackoverflow.com/questions/17489145/populating-a-listview-using-asynctaskloader
 		forceLoad();
+	}
+	
+}
+
+// A really simple ListView adapter that just says files are loading.
+// TODO(nbeckman): Have an adapter for a failed update and/or no account
+// as well.
+class LoadingFilesAdapter extends BaseAdapter {
+	// Used to inflate view from XML.
+	private final LayoutInflater inflater_;
+	// I think we need _some_ object to return as our one item.
+	private final Object item_;
+	
+	public LoadingFilesAdapter(Context context) {
+		this.inflater_ = LayoutInflater.from(context);
+		this.item_ = new Object();
+	}
+	
+	@Override public int getCount() { return 1; }
+
+	@Override
+	public Object getItem(int arg0) {
+		return item_;
+	}
+
+	@Override
+	public long getItemId(int i) {
+		return i;
+	}
+
+	@Override
+	public View getView(int arg0, View view, ViewGroup arg2) {
+		LinearLayout rowView;
+		if (view == null) {
+			rowView = (LinearLayout)inflater_.inflate(R.layout.choose_file_row, null);
+		} else {
+			rowView = (LinearLayout)view;
+		}
+		
+		// Display some reasonable loading text.
+		TextView label = (TextView)rowView.findViewById(R.id.label);
+		label.setText("Loading...");
+		TextView details = (TextView)rowView.findViewById(R.id.details);
+		details.setText("List of available spreadsheets are loading from Google Docs.");
+		return rowView;
 	}
 	
 }

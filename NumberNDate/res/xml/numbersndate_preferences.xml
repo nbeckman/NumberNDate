@@ -12,7 +12,7 @@
 		<!-- Launch the spreadsheet choosing intent. -->
         <Preference android:title="@string/change_spreadsheet"
              	    android:key="NUMBERS_SPREADSHEET_PREFERENCES_NAME" >
-            <intent android:targetClass="com.nbeckman.numberndate.ChooseFileActivity"
+            <intent android:targetClass="com.nbeckman.numberndate.SpreadsheetFileManager"
                 	android:targetPackage="com.nbeckman.numberndate" />
         </Preference>
     </PreferenceCategory>

@@ -12,4 +12,8 @@ complete.
   
 More:
 - Test out no network connection, make sure it still stores things. 
-- Have some text in the ChooseFileActivity before the files are loaded otherwise it looks really weird.
+  - I think there is something wrong with resuming the checker thread when you leave
+    the app and come back.
+- If you store a bunch of numbers and then change the 
+- Have network posting thread look at the network state, and don't try if there is no connection, and/or try less often.
+- Have some text in the SpreadsheetFileManager before the files are loaded otherwise it looks really weird.

@@ -27,7 +27,7 @@
         <!-- I copied this activity from the default above, and I do not
              know what most of these fields do. -->
         <activity
-            android:name="com.nbeckman.numberndate.ChooseFileActivity"
+            android:name="com.nbeckman.numberndate.SpreadsheetFileManager"
             android:configChanges="orientation|keyboardHidden|screenSize" >
         </activity>
         <!-- This 'activity' isn't very interesting, it just allows it to handle

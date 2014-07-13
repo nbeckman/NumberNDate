@@ -39,7 +39,7 @@ public class MainNumbersActivity extends Activity implements OnSharedPreferenceC
 	
 	// Intent ID; this tells us when the account picker is returning. 
 	private static final int kAccountChoiceIntent = 1;
-	// Intent ID; this tells us when the ChooseFileActivity is returning.
+	// Intent ID; this tells us when the SpreadsheetFileManager is returning.
 	private static final int kSpreadsheetChoiceIntent = 2;
 
 	// I'm anticipating having several callbacks for checking/posting
@@ -134,12 +134,12 @@ public class MainNumbersActivity extends Activity implements OnSharedPreferenceC
     
     private boolean establishAccountAndSpreadsheet() {
     	if(AccountManager.hasStoredAccount(this)) {
-    		if (ChooseFileActivity.hasStoredSpreadsheet(this)) {
+    		if (SpreadsheetFileManager.hasStoredSpreadsheet(this)) {
     			// Now we can actually do something.
     			return true;
     		} else {
     			// We need to call the ChooseFileActivity from an intent.
-    			Intent choose_spreadsheet_intent = new Intent(this, ChooseFileActivity.class);
+    			Intent choose_spreadsheet_intent = new Intent(this, SpreadsheetFileManager.class);
         		startActivityForResult(choose_spreadsheet_intent, kSpreadsheetChoiceIntent);
     		}
     	} else {
@@ -227,7 +227,7 @@ public class MainNumbersActivity extends Activity implements OnSharedPreferenceC
     			try {
     				spreadsheet_service_ = 
     						SpreadsheetUtils.setupSpreadsheetServiceInThisThread(MainNumbersActivity.this, account);
-        			final String spreadsheet_url = ChooseFileActivity.getStoredSpreadsheetURL(MainNumbersActivity.this);
+        			final String spreadsheet_url = SpreadsheetFileManager.getStoredSpreadsheetURL(MainNumbersActivity.this);
         			// Must be done in background thread.
         			worksheet_feed_ = spreadsheet_service_.getFeed(
         					new URL(spreadsheet_url), WorksheetFeed.class);
@@ -293,11 +293,11 @@ public class MainNumbersActivity extends Activity implements OnSharedPreferenceC
 
 	@Override
 	public void onSharedPreferenceChanged(SharedPreferences shared_prefs, String key) {
-		if (key.equals(ChooseFileActivity.kNumbersSpreadsheetPreferencesName)) {
+		if (key.equals(SpreadsheetFileManager.kNumbersSpreadsheetPreferencesName)) {
 			// See if  we've changed the settings TO a spreadsheet, or if we have somehow
 			// cleared it.
-			if (ChooseFileActivity.getStoredSpreadsheet(this) == null ||
-					ChooseFileActivity.getStoredSpreadsheet(this).length() == 0) {
+			if (SpreadsheetFileManager.getStoredSpreadsheet(this) == null ||
+					SpreadsheetFileManager.getStoredSpreadsheet(this).length() == 0) {
 				this.disableControls();
 			} else {
 				this.startDisplayLogic();
