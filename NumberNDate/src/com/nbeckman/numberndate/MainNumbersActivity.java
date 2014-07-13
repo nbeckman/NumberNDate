@@ -200,7 +200,6 @@ public class MainNumbersActivity extends Activity implements OnSharedPreferenceC
 	
 	// Needs a better name; attempts to load a user and spreadsheet once these properties have
 	// both already been selected by the user and stored in preferences.
-	// TODO(nbeckman): Call this whenever the spreadsheet changes.
 	private void startDisplayLogic() {
 		// By this point we should definitely have an account, so we can enable the controls
 		// that allow the user to enter stuff.
