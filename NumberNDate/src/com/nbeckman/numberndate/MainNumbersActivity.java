@@ -1,12 +1,6 @@
 package com.nbeckman.numberndate;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.List;
-
 import android.app.Activity;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -27,9 +21,6 @@ import android.widget.TextView;
 
 import com.google.android.gms.auth.GoogleAuthException;
 import com.google.gdata.client.spreadsheet.SpreadsheetService;
-import com.google.gdata.data.spreadsheet.WorksheetEntry;
-import com.google.gdata.data.spreadsheet.WorksheetFeed;
-import com.google.gdata.util.ServiceException;
 import com.nbeckman.numberndate.adapters.SpreadsheetAdapter;
 import com.nbeckman.numberndate.adapters.defaultadapter.DefaultSpreadsheetAdapter;
 
@@ -48,7 +39,6 @@ public class MainNumbersActivity extends Activity implements OnSharedPreferenceC
 	
 	private SpreadsheetAdapter spreadsheet_adapter_ = null;
 	private SpreadsheetService spreadsheet_service_ = null;
-	private WorksheetFeed worksheet_feed_ = null;
 	
 	// The listener for the 'add expense' button.
 	private OnClickListener add_expense_button_listener_ = new OnClickListener() {
@@ -205,79 +195,48 @@ public class MainNumbersActivity extends Activity implements OnSharedPreferenceC
 		// that allow the user to enter stuff.
 		this.enableControls();
 		
-        // Show a process dialog since loading the categories and
-        // stuff can be slow.
-        // TODO(nbeckman): This thing is like completely modal, so do something
-        // better...
-        final ProgressDialog progress_dialog = new ProgressDialog(this);
-        progress_dialog.setTitle(getResources().getString(R.string.loading_spreadsheet));
-        progress_dialog.setMessage(getResources().getString(R.string.wait_while_loading_spreadsheet));
-        progress_dialog.show();
-        
         // Make sure we are logged in, and have a spreadsheet chosen.
-        // TODO: Just want to try months, this will be hacked up.
-        // Like, do I really want this async task here?
         (new AsyncTask<String, String, InterfaceUpdateData>(){
         	@Override
         	protected InterfaceUpdateData doInBackground(String... arg0) {
         		final String account = AccountManager.getStoredAccount(MainNumbersActivity.this);
         		Log.i("MainNumbersActivity", "Account manager has stored account: " + account);
         		
-    			// Can't be called in UI thread.
+        		final String spreadsheet_url = SpreadsheetFileManager.getStoredSpreadsheetURL(MainNumbersActivity.this);
+        		final DefaultSpreadsheetAdapter next_spreadsheet_adapter = 
+        				 new DefaultSpreadsheetAdapter(getBaseContext(), spreadsheet_url);
+        		spreadsheet_adapter_ = next_spreadsheet_adapter;
+        		// Start callback thread that will periodically try to post outstanding expenses. If there had been
+        		// one running before, stop the old one so it will no longer post to the old spreadsheet.
+        		if (expenses_poster_ != null) {
+        			expenses_poster_.stop();
+        		}
+        		final TextView outstanding_expenses = (TextView)findViewById(R.id.expensesToPostValue);
+        		expenses_poster_ = 
+        			new OutstandingExpensesPoster(outstanding_expenses, spreadsheet_adapter_);
+        		expenses_poster_.start();
+        		
+        		final long num_outstanding_expenses =
+        			spreadsheet_adapter_.NumOutstandingEntries();
+        		final InterfaceUpdateData result = new InterfaceUpdateData(num_outstanding_expenses);
+    			
     			try {
     				spreadsheet_service_ = 
     						SpreadsheetUtils.setupSpreadsheetServiceInThisThread(MainNumbersActivity.this, account);
-        			final String spreadsheet_url = SpreadsheetFileManager.getStoredSpreadsheetURL(MainNumbersActivity.this);
-        			// Must be done in background thread.
-        			worksheet_feed_ = spreadsheet_service_.getFeed(
-        					new URL(spreadsheet_url), WorksheetFeed.class);
-            		List<WorksheetEntry> worksheets = worksheet_feed_.getEntries();
-            		WorksheetEntry worksheet = worksheets.get(0);
-            		spreadsheet_adapter_ = new DefaultSpreadsheetAdapter(getBaseContext(), worksheet, spreadsheet_service_);
-            		
-            		// Start callback thread that will periodically try to post outstanding expenses. If there had been
-            		// one running before, stop the old one so it will no longer post to the old spreadsheet.
-            		if (expenses_poster_ != null) {
-            			expenses_poster_.stop();
-            		}
-            		final TextView outstanding_expenses = (TextView)findViewById(R.id.expensesToPostValue);
-            		// TODO(nbeckman): Some things are mixed up here that are preventing us from doing no-network
-            		// updates correctly. The poster is responsible for posting to the network and updating the
-            		// number of expenses. It should be able to keep updating the number of expenses even if there
-            		// is no Spreadsheet service because of network reasons.
-            		expenses_poster_ = new OutstandingExpensesPoster(
-            			outstanding_expenses, 
-            			spreadsheet_adapter_);
-            		expenses_poster_.start();
-            		
-            		final long num_outstanding_expenses =
-            			spreadsheet_adapter_.NumOutstandingEntries();
-        			return new InterfaceUpdateData(num_outstanding_expenses);
+        			next_spreadsheet_adapter.setSpreadsheetService(spreadsheet_service_);
 				} catch (GoogleAuthException e) {
-					// TODO Auto-generated catch block
+					// Not yet authenticated to use the spreadsheet.
 					e.printStackTrace();
-				} catch (MalformedURLException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (ServiceException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-    			return null;
+				} 
+    			return result;
         	}
         	
         	@Override
         	protected void onPostExecute(InterfaceUpdateData update) {
-                // Dismiss progress dialog.
-                progress_dialog.dismiss();
         		if (update == null) {
         			return;
         		}
         		
-        		// END PART I KNOW IS HACKED UP
         		if (update.getNumOutstandingExpenses() != null) {
         			final TextView outstanding_expenses_text_view =
         				(TextView)findViewById(R.id.expensesToPostValue);

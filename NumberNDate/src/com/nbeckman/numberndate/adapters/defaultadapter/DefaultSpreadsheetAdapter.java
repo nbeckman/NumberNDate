@@ -21,24 +21,30 @@ import com.google.gdata.client.spreadsheet.SpreadsheetService;
 import com.google.gdata.data.spreadsheet.ListEntry;
 import com.google.gdata.data.spreadsheet.ListFeed;
 import com.google.gdata.data.spreadsheet.WorksheetEntry;
+import com.google.gdata.data.spreadsheet.WorksheetFeed;
 import com.google.gdata.util.ServiceException;
 import com.nbeckman.numberndate.adapters.SpreadsheetAdapter;
 import com.nbeckman.numberndate.adapters.defaultadapter.DefaultPendingNumbersContract.PendingNumbersEntry;
 
-// Default spreadsheet adapter. Stores numbers in the Sql database until they
+// Default spreadsheet adapter. Stores numbers in the database until they
 // are posted to the spreadsheet, which occurs by adding a new row.
+// TODO(nbeckman): Consider making this two classes; one that adds the expenses
+// to the database, and the other that actually posts them when the network is
+// ready.
 public class DefaultSpreadsheetAdapter implements SpreadsheetAdapter {
 	private final DefaultAdapterDbHelper dbHelper;
-	private final WorksheetEntry worksheetFeed;
-	private final SpreadsheetService spreadsheetService;
+	// The Url of the entire spreadsheet feed.
+	private final String spreadsheetFeedUrl;
+	// Authenticated spreadsheet service used for making calls out to Google Docs.
+	// This field can be changed as we expect it to be set only once a connection
+	// to the network has been established.
+	// MUST BE GUARDED BY this, AS IT CAN CHANGE.
+	private SpreadsheetService spreadsheetService = null;
 	
 	public DefaultSpreadsheetAdapter(
-			Context context,
-			WorksheetEntry feed, 
-			SpreadsheetService spreadsheetService) {
+			Context context, String spreadsheetFeedUrl) {
 		this.dbHelper = new DefaultAdapterDbHelper(context);
-		this.worksheetFeed = feed;
-		this.spreadsheetService = spreadsheetService;
+		this.spreadsheetFeedUrl = spreadsheetFeedUrl;
 		
 		// Uncomment to clear database for testing.
 //		// TODO
@@ -46,10 +52,11 @@ public class DefaultSpreadsheetAdapter implements SpreadsheetAdapter {
 //		db.delete(ExpenseEntry.TABLE_NAME, "1", null);
 	}
 	
+	public synchronized void setSpreadsheetService(SpreadsheetService spreadsheetService) {
+		this.spreadsheetService = spreadsheetService;
+	}
+	
 	@Override
-	// TODO(nbeckman): We need to store a url in addition to the value. We
-	// don't want any concern that we're writing values from one table to
-	// another one.
 	public void AddValue(double number) {
 		final long date_added = System.currentTimeMillis();
 		
@@ -58,6 +65,7 @@ public class DefaultSpreadsheetAdapter implements SpreadsheetAdapter {
 		ContentValues values = new ContentValues();
 		values.put(PendingNumbersEntry.COLUMN_NAME_DATE_ADDED, date_added);
 		values.put(PendingNumbersEntry.COLUMN_NAME_NUMBER, number);
+		values.put(PendingNumbersEntry.COLUMN_NAME_SPREADSHEET_FEED_URL, spreadsheetFeedUrl);
 		db.insert(PendingNumbersEntry.TABLE_NAME, null, values);
 	}
 
@@ -68,7 +76,13 @@ public class DefaultSpreadsheetAdapter implements SpreadsheetAdapter {
 	}
 	
 	@Override
-	public boolean PostOneEntry() {
+	public synchronized boolean PostOneEntry() {
+		// The service can be null until a connection to the network
+		// is established.
+		if (this.spreadsheetService == null) {
+			return false;
+		}
+		
 		// Get the oldest expense by ID if there is one, and then
 		// post it.
 		final SQLiteDatabase db = this.dbHelper.getWritableDatabase();
@@ -96,12 +110,19 @@ public class DefaultSpreadsheetAdapter implements SpreadsheetAdapter {
 				cursor.getLong(
 					cursor.getColumnIndexOrThrow(
 						PendingNumbersEntry.COLUMN_NAME_DATE_ADDED));
+		final String spreadsheet_url = 
+				cursor.getString(
+					cursor.getColumnIndexOrThrow(
+						PendingNumbersEntry.COLUMN_NAME_SPREADSHEET_FEED_URL));
 		try {
-			// Fetch the list feed of the worksheet.
-		    URL listFeedUrl = worksheetFeed.getListFeedUrl();
+			// Fetch the list feed of the first worksheet.
+			WorksheetFeed worksheed_feed = spreadsheetService.getFeed(new URL(spreadsheet_url), WorksheetFeed.class);
+    		List<WorksheetEntry> worksheets = worksheed_feed.getEntries();
+    		WorksheetEntry worksheet = worksheets.get(0);
+		    URL listFeedUrl = worksheet.getListFeedUrl();
 		    ListFeed listFeed = spreadsheetService.getFeed(listFeedUrl, ListFeed.class);
 		    
-		    // Convert date in millis to DD/MM/YY
+		    // Convert date in millis to date in local format.
 		    DateFormat date_format = SimpleDateFormat.getDateInstance();
 	        Date date_added = new Date(date_added_millis);
 		    
