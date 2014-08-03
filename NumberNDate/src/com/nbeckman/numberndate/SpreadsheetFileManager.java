@@ -239,9 +239,9 @@ class LoadingFilesAdapter extends BaseAdapter {
 		
 		// Display some reasonable loading text.
 		TextView label = (TextView)rowView.findViewById(R.id.label);
-		label.setText("Loading...");
+		label.setText(rowView.getResources().getString(R.string.loading));
 		TextView details = (TextView)rowView.findViewById(R.id.details);
-		details.setText("List of available spreadsheets are loading from Google Docs.");
+		details.setText(rowView.getResources().getString(R.string.finding_available_spreadsheets));
 		return rowView;
 	}
 	

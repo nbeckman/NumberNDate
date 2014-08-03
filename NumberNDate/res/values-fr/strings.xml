@@ -1,17 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Number \'N Date</string>
-    <string name="dummy_button">Dummy Button</string>
-    <string name="dummy_content">DUMMY\nCONTENT</string>
-    <string name="total_text">Total actuel: </string>
-    <string name="add_expense_text">Ajoute un chiffre</string>
-	<string name="expense_amount_hint">0.00</string>
-	<string name="change_spreadsheet">Change tableur</string>
+    <string name="add_expense_text">Ajoutez un chiffre</string>
+    <string name="expense_amount_hint">0.00</string>
+    <string name="change_spreadsheet">Change tableur</string>
 	<string name="change_spreadsheet_account">Change le compte</string>
-	
 	<string name="preferences_accounts_category">Les comptes et fichiers</string>
-	<string-array name="currency_array">
-        <item>€</item>
-    </string-array>
     <string name="settings_menu_name">Paramètres</string>
+    <string name="expenses_to_post_text">Chiffres en attendant télécharger: </string>
+    <string name="expenses_to_post_default"> &#8230;</string>
+    <string name="choose_your_budget_file">Choisissez un feuille de calcul</string>
+    <string name="loading">Téléchargement en course</string>
+    <string name="finding_available_spreadsheets">En cherchant les feuilles de calcul disponibles</string>
 </resources>
