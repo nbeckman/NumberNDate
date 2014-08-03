@@ -47,6 +47,9 @@ public class DefaultSpreadsheetAdapter implements SpreadsheetAdapter {
 	}
 	
 	@Override
+	// TODO(nbeckman): We need to store a url in addition to the value. We
+	// don't want any concern that we're writing values from one table to
+	// another one.
 	public void AddValue(double number) {
 		final long date_added = System.currentTimeMillis();
 		

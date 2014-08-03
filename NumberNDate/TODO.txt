@@ -9,11 +9,13 @@ complete.
 - Make sure the columns have headers with the same name we're going to insert with; that's
   the only way the row feed works. Or just use the cell feed. Might not be so hard...
   a.) check for heads and use them, b.) if empty write number/date
-  
-More:
-- Test out no network connection, make sure it still stores things. 
+- Offline updates really suck. The main activity will not create a spreadsheet service and thus
+  no offline updater thread unless we are connected to the network. But in theory, all we really
+  need to store is a URL, I am thinking list feed url, and then we should be able to accept updates
+  as much as we want. 
   - I think there is something wrong with resuming the checker thread when you leave
     the app and come back.
-- If you store a bunch of numbers and then change the 
+  
+More:
 - Have network posting thread look at the network state, and don't try if there is no connection, and/or try less often.
 - Have some text in the SpreadsheetFileManager before the files are loaded otherwise it looks really weird.

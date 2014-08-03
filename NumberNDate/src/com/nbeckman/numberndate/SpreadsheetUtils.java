@@ -45,7 +45,7 @@ public class SpreadsheetUtils {
 		// Now that we have the token, can we actually list
 		// the spreadsheets or anything...
 		SpreadsheetService s =
-				new SpreadsheetService("Megabudget");
+				new SpreadsheetService("NumberNDate");
 		s.setAuthSubToken(token);
 		return s;
 	}

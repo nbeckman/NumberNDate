@@ -241,6 +241,10 @@ public class MainNumbersActivity extends Activity implements OnSharedPreferenceC
             			expenses_poster_.stop();
             		}
             		final TextView outstanding_expenses = (TextView)findViewById(R.id.expensesToPostValue);
+            		// TODO(nbeckman): Some things are mixed up here that are preventing us from doing no-network
+            		// updates correctly. The poster is responsible for posting to the network and updating the
+            		// number of expenses. It should be able to keep updating the number of expenses even if there
+            		// is no Spreadsheet service because of network reasons.
             		expenses_poster_ = new OutstandingExpensesPoster(
             			outstanding_expenses, 
             			spreadsheet_adapter_);
