@@ -1,0 +1,11 @@
+WARNING!
+
+By using this application you may lose your data.
+
+Yes, I have tried my absolute best to find any bugs; as far as I have tested, this
+program reads only the spreadsheets you select, and adds only the rows you asked to
+be added, but this is software and I cannot guarantee there won't be any bugs. 
+Please do not use this software unles you have some degree of risk tolerance with
+your spreadsheet data.
+
+See the license for more legalease describing, in many more words, the same thing.
