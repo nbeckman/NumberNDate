@@ -2,6 +2,8 @@ package com.nbeckman.numberndate.adapters.defaultadapter;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -18,6 +20,8 @@ import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
 import com.google.gdata.client.spreadsheet.SpreadsheetService;
+import com.google.gdata.data.spreadsheet.CellEntry;
+import com.google.gdata.data.spreadsheet.CellFeed;
 import com.google.gdata.data.spreadsheet.ListEntry;
 import com.google.gdata.data.spreadsheet.ListFeed;
 import com.google.gdata.data.spreadsheet.WorksheetEntry;
@@ -32,6 +36,9 @@ import com.nbeckman.numberndate.adapters.defaultadapter.DefaultPendingNumbersCon
 // to the database, and the other that actually posts them when the network is
 // ready.
 public class DefaultSpreadsheetAdapter implements SpreadsheetAdapter {
+	private static final String NUMBER_HEADER_STRING = "number";
+	private static final String DATE_HEADER_STRING = "date";
+	
 	private final DefaultAdapterDbHelper dbHelper;
 	// The Url of the entire spreadsheet feed.
 	private final String spreadsheetFeedUrl;
@@ -131,14 +138,23 @@ public class DefaultSpreadsheetAdapter implements SpreadsheetAdapter {
 	        // header that it should go in.
 	        // TODO(nbeckman): Make sure the columns have these names.
 		    ListEntry row = new ListEntry();
-		    row.getCustomElements().setValueLocal("date", date_format.format(date_added));
-		    row.getCustomElements().setValueLocal("number", Double.toString(number));
+		    row.getCustomElements().setValueLocal(DATE_HEADER_STRING, date_format.format(date_added));
+		    row.getCustomElements().setValueLocal(NUMBER_HEADER_STRING, Double.toString(number));
 
 		    Log.i("DefaultSpreadsheetAdapter", "Attempting to post number " + number +
 		    		" and date " + date_format.format(date_added) + " to url " + listFeedUrl);
 		    
 		    // Send the new row to the API for insertion.
-		    row = listFeed.insert(row);
+		    try {
+		    	row = listFeed.insert(row);
+		    }
+		    catch (com.google.gdata.util.InvalidEntryException e) {
+		    	// This means in all likelihood, you don't have 'date' and 'number'
+		    	// headers. Try to create them if we can, and insert again.
+		    	maybeAddSpreadsheetHeaders(worksheet);
+		    	// Just try again so at least the exception will be thrown...
+		    	row = listFeed.insert(row);
+		    }
 			// Now delete that row so we don't process it again.
 			// Technically we've got no atomicity here... Hopefully
 			// the network operation is much more likely to fail than
@@ -158,10 +174,37 @@ public class DefaultSpreadsheetAdapter implements SpreadsheetAdapter {
 			e.printStackTrace();
 		} catch (ServiceException e) {
 			e.printStackTrace();
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
 		}
 		return false;
 	}
 	
+	// If the header row is empty, add 'number' and 'date' headers, otherwise
+	// we are in danger of messing up someone's data.
+	private void maybeAddSpreadsheetHeaders(WorksheetEntry worksheet) throws URISyntaxException, IOException, ServiceException {
+		// Fetch entire top row to see if it's empty.
+		URL cellFeedUrl = new URI(worksheet.getCellFeedUrl().toString()
+				+ "?min-row=1&max-row=1").toURL();
+		CellFeed cellFeed = spreadsheetService.getFeed(cellFeedUrl, CellFeed.class);
+		if (cellFeed.getEntries().isEmpty()) {
+			// Now request two rows, and force them to be queried even if they are empty.
+			cellFeedUrl = new URI(worksheet.getCellFeedUrl().toString()
+					+ "?min-row=1&max-row=1&min-col=1&max-col=2&return-empty=true").toURL();
+			cellFeed = spreadsheetService.getFeed(cellFeedUrl, CellFeed.class);
+			// Set their values to number and date.
+			CellEntry first_cell = cellFeed.getEntries().get(0);
+			first_cell.changeInputValueLocal(DATE_HEADER_STRING);
+			first_cell.update();
+			
+			CellEntry second_cell = cellFeed.getEntries().get(1);
+			second_cell.changeInputValueLocal(NUMBER_HEADER_STRING);
+			second_cell.update();
+		} else {
+			Log.w("DefaultSpreadsheetAdapter", "Can't add headers because spreadsheet is not empty.");
+		}
+	}
+
 	private List<Loader<?>> month_oberservers_ = new ArrayList<Loader<?>>();
 	@Override
 	public void AddMonthsObserver(Loader<?> observer) {

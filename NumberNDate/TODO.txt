@@ -3,13 +3,8 @@ TODO
 Sometimes I go long stretches of time without working on this app, so I can't remember where I am, progress-wise.
 
 Here's some things that need doing:
-
-I think these are the two things I need to do before considering the first version to be
-complete.
-- Make sure the columns have headers with the same name we're going to insert with; that's
-  the only way the row feed works. Or just use the cell feed. Might not be so hard...
-  a.) check for headers and use them, b.) if empty write number/date
-  
-More:
 - Have network posting thread look at the network state, and don't try if there is no connection, and/or try less often.
 - Have some text in the SpreadsheetFileManager before the files are loaded otherwise it looks really weird.
+- The ability to add new spreadsheets from the app.
+- Adding of 'number' and 'date' headers is very limited; we could allow users to choose the terms used. Also, if the
+  spreadsheet is not COMPLETELY empty we don't add headers because we are too scared.
